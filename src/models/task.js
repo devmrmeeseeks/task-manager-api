@@ -17,7 +17,12 @@ const taskSchema = new mongoose.Schema({
         ref: 'User'
     }
 }, {
-    timestamps: true
+    timestamps: true,
+    writeConcern: {
+        w: 'majority',
+        j: true,
+        wtimeout: 1000
+     }
 })
 
 const Task = mongoose.model('Task', taskSchema)
