@@ -49,12 +49,7 @@ const userSchema = new  mongoose.Schema({
         }
     }]
 }, {
-    timestamps: true,
-    writeConcern: {
-        w: 'majority',
-        j: true,
-        wtimeout: 1000
-     }
+    timestamps: true
 })
 
 userSchema.virtual('tasks', {
