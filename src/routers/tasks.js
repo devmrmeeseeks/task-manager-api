@@ -4,23 +4,32 @@ const Task = require('../models/task')
 const auth = require('../middleware/auth')
 
 router.post('/tasks', auth, async (req, res) => {
+    const properties = Object.keys(req.body)
+    const allowedProperties = ['description', 'completed']
+    const isValidOperation = properties.every((property) => allowedProperties.includes(property))
+
+    if (!isValidOperation)
+        return res.status(400).send({ error: 'Invalid properties' })
+
     const task = new Task({
         ...req.body,
         owner: req.user._id
     })
 
     try {
-        task.save()
-        res.send(task)
+        await task.save()
+        res.status(201).send(task)
     } catch (e) {
-        console.log(e)
         res.status(400).send(e)
     }
 })
 
 router.get('/tasks', auth, async (req, res) => {
-    const completed = req.query.completed === 'true'
     const sort = {}
+    const match = {}
+
+    if (req.query.completed)
+        match.completed = req.query.completed === 'true'
 
     if (req.query.sortBy) {
         const parts = req.query.sortBy.split(':')
@@ -30,7 +39,7 @@ router.get('/tasks', auth, async (req, res) => {
     try {
         await req.user.populate({
             path: 'tasks',
-            match: { completed: completed },
+            match,
             options: {
                 limit: parseInt(req.query.limit),
                 skip: parseInt(req.query.skip),

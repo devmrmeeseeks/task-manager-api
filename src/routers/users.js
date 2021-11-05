@@ -7,8 +7,14 @@ const router = new express.Router()
 const { sendWelcomeEmail, sendCancelationEmail } = require('../emails/account')
 
 router.post('/users', async (req, res) => {
-    const user = new User(req.body)
- 
+    const properties = Object.keys(req.body)
+    const allowedProperties = ['name', 'email', 'password', 'age']
+    const isValidOperation = properties.every((property) => allowedProperties.includes(property))
+
+    if (!isValidOperation)
+        return res.status(400).send({ error: 'Invalid properties' })
+
+        const user = new User(req.body)
     try {
         await user.save()
         sendWelcomeEmail(user.email, user.name)
@@ -106,11 +112,23 @@ router.patch('/users/me', auth, async (req, res) => {
 
     if (!isValidOperation)
         return res.status(400).send({ error: 'Invalid updates' })
- 
+    
+    let change = false
     try {
-        updates.forEach((update) => req.user[update] = req.body[update])
-        await req.user.save()
+        updates.forEach((update) => {
+            if (req.body[update] === undefined)
+            return
 
+            if (!change)
+                change = true
+
+            req.user[update] = req.body[update]
+        })
+
+        if (!change)
+            throw new Error()
+
+        await req.user.save()
         res.send(req.user)
     } catch (e) {
         res.status(400).send(e)
